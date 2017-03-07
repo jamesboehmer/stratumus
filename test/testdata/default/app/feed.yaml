@@ -1,0 +1,5 @@
+---
+TOPLEVEL_THREE: default/app/feed.yaml
+TOPLEVEL_FOUR: default/app/feed.yaml
+TOPLEVEL_FIVE: default/app/feed.yaml
+SNS_ARN: arn:aws:sns:{{ region }}:{{ ACCOUNTID }}:{{ pool }}-topic

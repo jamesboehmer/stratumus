@@ -1,0 +1,3 @@
+---
+DB_HOST: dev-db-{{ pool }}.foobar.com
+DB_PORT: 12345
