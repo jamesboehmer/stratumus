@@ -1,0 +1,7 @@
+hierarchy:
+  - 
+    - env
+    - namespace
+    - app
+    - region
+    - pool

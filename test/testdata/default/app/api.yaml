@@ -1,0 +1,5 @@
+---
+TOPLEVEL_THREE: default/app/api.yaml
+TOPLEVEL_FOUR: default/app/api.yaml
+TOPLEVEL_FIVE: default/app/api.yaml
+SNS_ARN: arn:aws:sns:{{ region }}:{{ ACCOUNTID }}:{{ pool }}-topic
