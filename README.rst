@@ -71,7 +71,7 @@ Variables defined from your hierarchy are available for interpolation anywhere i
 
 Since stratumus uses jinja2 for variable interpolation, all of Jinja2's `jinjafilters`_ are available.  For example, you can use ``ENV: "{{ env | upper }}"``, and your final output will include ``ENV: DEV``.
 
-.. _jinjafilters: http://jinja.pocoo.org/docs/latest/templates/#builtin-filters
+.. _jinjafilters: http://jinja.pocoo.org/docs/latest/templates/
 
 
 
