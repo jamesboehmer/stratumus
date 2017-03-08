@@ -1,16 +1,17 @@
 from __future__ import print_function
 
-from argparse import ArgumentParser
-from glob import glob
-import os
 import errno
+import json
+import logging
+import os
+import sys
+from argparse import ArgumentParser
+from collections import OrderedDict
+from glob import glob
+
 import hiyapyco
 from hiyapyco import odyldo
-from collections import OrderedDict
-import sys
-import logging
-import json
-from jinja2 import Environment, Undefined, DebugUndefined, StrictUndefined
+from jinja2 import Environment, DebugUndefined, StrictUndefined
 
 hiyapyco.jinja2env = Environment(undefined=StrictUndefined)
 
@@ -22,7 +23,7 @@ hilogger.addHandler(hiconsole)
 console = logging.StreamHandler()
 logger = logging.getLogger('stratumus')
 logger.addHandler(console)
-logger.setLevel(logging.ERROR)
+logger.setLevel(logging.INFO)
 
 
 # Shamelessly copied from http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -74,15 +75,14 @@ class Stratum(object):
             return
         if not out_dir:
             for filename, config in self.config.items():
-                print("{}:\n---".format(filename))
-                print(odyldo.safe_dump(config, default_flow_style=False))
+                logger.info("{}:\n---\n{}".format(filename, odyldo.safe_dump(config, default_flow_style=False)))
         else:
             for filename, config in self.config.items():
                 output_name = os.path.sep.join([out_dir, filename])
                 output_dir = os.path.dirname(output_name)
                 mkdir_p(output_dir)
                 with open(output_name, 'wb') as f:
-                    logger.debug("Writing {}".format(output_name))
+                    logger.info(output_name)
                     f.write('---\n')
                     f.write(hiyapyco.dump(config, default_flow_style=False))
 
