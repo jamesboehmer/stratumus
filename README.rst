@@ -5,15 +5,16 @@ This tool was created to ease the management of your configuration data by enabl
 interpolation and custom hierarchies.
 
 Installation
-------------
+============
 
 ``pip install stratumus``
 
 Usage
------
+=====
 
 Working With Hierarchies
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
+
 Your hierarchy defines a directory structure whose names can be interpolated (with jinja2) inside your configuration.
 Given this directory structure::
 
@@ -39,6 +40,7 @@ Given this directory structure::
             └── foo.yaml
 
 You might run:
+
 ``stratumus --root data --hierarchy env namespace app region group --out /tmp/data``
 
 Stratumus will first look for yaml files under ``data/config`` which match your hierarchy pattern.  In the above
@@ -66,15 +68,18 @@ There is one output for each file found in the config hierarchy.  In this exampl
 ``dev/foo/api/us-east-1/external.yaml``.
 
 Sharing global variables
-~~~~~~~~~~~~~~~~~~~~~~~~
+------------------------
+
 Variables defined in the found files will be preserved unless they are overriden later in the hierarchy.  For example,
 if ``data/default/env/dev.yaml`` defined the variable ``NEWRELIC_LICENSE_KEY: "abc123"``, and that variable appeared
 nowhere else in the hierarchy, then the final output of layering and interpolation would include
 ``NEWRELIC_LICENSE_KEY: "abc123"`` .
 This is useful when you need to share a value across every application configuration you have.
 
+
 Overriding variables
-~~~~~~~~~~~~~~~~~~~~
+--------------------
+
 Variables defined in the found files will be overriden if they are found later in the hierarchy.  For example, if
 ``data/default/env/dev.yaml`` defined the variable ``NEWRELIC_LICENSE_KEY: "abc123"``, and that variable appeared later
 in ``data/default/app/api.yaml`` as ``NEWRELIC_LICENSE_KEY: "def456"``, then the final output of layering and
@@ -82,16 +87,15 @@ interpolation would include ``NEWRELIC_LICENSE_KEY: "def456"``.  This is useful 
 most application configurations, but have specific needs to override.
 
 Variable interpolation
-~~~~~~~~~~~~~~~~~~~~~~
+----------------------
+
 Variables defined from your hierarchy are available for interpolation anywhere in the hierarchy.  But you can also
 refer to variables defined in the files themselves.  For example, if ``NEWRELIC_LICENSE_KEY`` were defined in
 ``data/default/env/dev.yaml``, you can refer to ``{{ NEWRELIC_LICENSE_KEY }}`` in any other file, so long as it is
 loaded later in the hierarchy.  If you attempt to interpolate a variable which does not exist, stratumus will fail.
 
-Since stratumus uses jinja2 for variable interpolation, all of Jinja2's `jinjafilters`_ are available.  For example,
-you can use ``ENV: "{{ env | upper }}"``, and your final output will include ``ENV: DEV``.
-
-.. _jinjafilters: http://jinja.pocoo.org/docs/latest/templates/
+Since stratumus uses jinja2 for variable interpolation, all of Jinja2's `filters <http://jinja.pocoo.org/docs/latest/templates/>`_ are available.  
+For example, you can use ``ENV: "{{ env | upper }}"``, and your final output will include ``ENV: DEV``.
 
 
 
