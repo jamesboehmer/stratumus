@@ -84,7 +84,7 @@ class Stratum(object):
                 output_name = os.path.sep.join([out_dir, filename])
                 output_dir = os.path.dirname(output_name)
                 mkdir_p(output_dir)
-                with open(output_name, 'wb') as f:
+                with open(output_name, 'w') as f:
                     logger.info(output_name)
                     f.write('---\n')
                     f.write(hiyapyco.dump(config, default_flow_style=False))

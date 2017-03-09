@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='stratumus',
-      version='0.0.7',
+      version='0.0.8',
       description='Layered Yaml Python Configuration',
       author='James Boehmer',
       author_email='james.boehmer@gmail.com',
@@ -22,6 +22,7 @@ setup(name='stratumus',
           'Intended Audience :: Developers',
           'License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)',
           'Programming Language :: Python :: 2.7',
+          'Programming Language :: Python :: 3.6'
       ],
       platforms = 'any',
       license = 'GPL',
