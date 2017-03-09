@@ -5,18 +5,20 @@ This tool was created to ease the management of your configuration data by enabl
 interpolation and custom hierarchies.
 
 Installation
-============
+------------
 
 ``pip install stratumus``
 
 Usage
-=====
+-----
 
 Working With Hierarchies
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Your hierarchy defines a directory structure whose names can be interpolated (with jinja2) inside your configuration.
-Given this directory structure::
+Given this directory structure:
+
+::
 
     data
     ├── config
@@ -45,7 +47,9 @@ You might run:
 
 Stratumus will first look for yaml files under ``data/config`` which match your hierarchy pattern.  In the above
 example, it will find ``data/config/dev/foo/api/us-east-1/external.yaml``, and your hierarchy variables will be
-defined as::
+defined as:
+
+::
 
     env: dev
     namespace: foo
@@ -56,7 +60,9 @@ defined as::
 Now that stratumus has your hierarchy variables defined, it will look for default configurations to load first, in
 hierarchy order.  Your hierarchy variables are available for interpolation inside your yaml files as well, so you can
 use ``{{ env }}`` and ``{{ region }}`` in both your config and your defaults.  It will look for the following files,
-and ignore missing ones::
+and ignore missing ones:
+
+::
 
     data/default/env/dev.yaml
     data/default/namespace/foo.yaml
@@ -68,7 +74,7 @@ There is one output for each file found in the config hierarchy.  In this exampl
 ``dev/foo/api/us-east-1/external.yaml``.
 
 Sharing global variables
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Variables defined in the found files will be preserved unless they are overriden later in the hierarchy.  For example,
 if ``data/default/env/dev.yaml`` defined the variable ``NEWRELIC_LICENSE_KEY: "abc123"``, and that variable appeared
@@ -78,7 +84,7 @@ This is useful when you need to share a value across every application configura
 
 
 Overriding variables
---------------------
+~~~~~~~~~~~~~~~~~~~~
 
 Variables defined in the found files will be overriden if they are found later in the hierarchy.  For example, if
 ``data/default/env/dev.yaml`` defined the variable ``NEWRELIC_LICENSE_KEY: "abc123"``, and that variable appeared later
@@ -87,7 +93,7 @@ interpolation would include ``NEWRELIC_LICENSE_KEY: "def456"``.  This is useful 
 most application configurations, but have specific needs to override.
 
 Variable interpolation
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 Variables defined from your hierarchy are available for interpolation anywhere in the hierarchy.  But you can also
 refer to variables defined in the files themselves.  For example, if ``NEWRELIC_LICENSE_KEY`` were defined in
