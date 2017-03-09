@@ -38,17 +38,20 @@ def mkdir_p(path):
 
 
 class Stratum(object):
-    def __init__(self, root_dir, hierarchies):
+    def __init__(self, root_dir, hierarchies, filters={}):
         self.root_dir = os.path.abspath(root_dir.rstrip('/'))
         self.config_dir = os.path.sep.join([self.root_dir, 'config'])
         self.default_dir = os.path.sep.join([self.root_dir, 'default'])
         self.hierarchies = hierarchies or [[]]
+        self.filters = filters
         self.config = {}
         self.walk_configs()
 
     def walk_configs(self):
         for hierarchy in self.hierarchies:
-            glob_pattern = os.path.sep.join([self.config_dir] + ['**' for _ in hierarchy[:-1]] + ['*.yaml'])
+            glob_pattern = os.path.sep.join(
+                [self.config_dir] + [self.filters.get(h, '**') for h in hierarchy[:-1]] + [
+                    self.filters.get(hierarchy[-1], '*')]) + '.yaml'
             logger.debug("Glob pattern: {}".format(glob_pattern))
             leaves = glob(glob_pattern)
             for leaf in leaves:
@@ -96,7 +99,8 @@ def main():
     parser.add_argument("-i", "--hierarchy", nargs='+', action='append', type=str, required=False)
     parser.add_argument("-o", "--out", type=str, default=None, help="Output Directory", required=False)
     parser.add_argument("-d", "--debug", action='store_true', help="Enable Debugging", required=False)
-    args = parser.parse_args()
+
+    args, unknown = parser.parse_known_args()
 
     if args.debug:
         hiyapyco.jinja2env = Environment(undefined=DebugUndefined)
@@ -123,10 +127,15 @@ def main():
 
     stratum_config['debug'] = args.debug
 
+    filters = dict(zip([u[2:] for u in unknown[:-1:2] if u.startswith('--')], unknown[1::2]))
+
+    stratum_config['filters'] = filters or stratum_config.get('filters') or {}
+
     logger.debug(json.dumps(stratum_config))
 
     try:
-        stratum = Stratum(root_dir=stratum_config.get('root'), hierarchies=stratum_config.get('hierarchy'))
+        stratum = Stratum(root_dir=stratum_config.get('root'), hierarchies=stratum_config.get('hierarchy'),
+                          filters=filters)
         stratum.dump_configs(stratum_config.get('out'))
     except Exception as e:
         logger.error(e)

@@ -104,12 +104,12 @@ Since stratumus uses jinja2 for variable interpolation, all of Jinja2's `filters
 For example, you can use ``ENV: "{{ env | upper }}"``, and your final output will include ``ENV: DEV``.
 
 
+Filtering
+~~~~~~~~~
 
+You may have hundreds of configurations.  But in the case where you only want to render a subset of them, you may pass
+extra positional arguments as filters to stratumus.  For example, this command would run stratumus only for configs
+under ``data/config/prod/**/us-east-1/*.yaml``:
 
-
-
-
-
-
-
+``stratumus --root data --hierarchy env namespace app region group --out /tmp/data --env prod --region us-east-1``
 
