@@ -38,7 +38,7 @@ def mkdir_p(path):
 
 
 class Stratum(object):
-    def __init__(self, root_dir='.', hierarchies=[[]]):
+    def __init__(self, root_dir, hierarchies):
         self.root_dir = os.path.abspath(root_dir.rstrip('/'))
         self.config_dir = os.path.sep.join([self.root_dir, 'config'])
         self.default_dir = os.path.sep.join([self.root_dir, 'default'])
@@ -89,11 +89,13 @@ class Stratum(object):
 
 def main():
     parser = ArgumentParser(description="Stratumus Layered Config Parser")
-    parser.add_argument("--config", type=str, default='stratumus.yaml', required=False)
-    parser.add_argument("--root", type=str, default='.', required=False)
-    parser.add_argument("--hierarchy", nargs='+', action='append', type=str, required=False)
-    parser.add_argument("--out", type=str, default=None, help="Output Directory", required=False)
-    parser.add_argument("--debug", action='store_true', help="Enable Debugging", required=False)
+    parser.add_argument("-c", "--config", type=str, default=None, required=False,
+                        help="Stratumus hierarchy config (default: $root/stratumus.yaml")
+    parser.add_argument("-r", "--root", type=str, default=None, required=False,
+                        help="Directory with config data (default: .)")
+    parser.add_argument("-i", "--hierarchy", nargs='+', action='append', type=str, required=False)
+    parser.add_argument("-o", "--out", type=str, default=None, help="Output Directory", required=False)
+    parser.add_argument("-d", "--debug", action='store_true', help="Enable Debugging", required=False)
     args = parser.parse_args()
 
     if args.debug:
@@ -101,19 +103,25 @@ def main():
         logger.setLevel(logging.DEBUG)
         hilogger.setLevel(logging.DEBUG)
 
+    if args.config and args.root is None:
+        args.root = os.path.dirname(args.config)
+
+    if args.root is None:
+        args.root = os.path.abspath('.')
+
+    if args.config is None:
+        args.config = os.path.sep.join([args.root, 'stratumus.yaml'])
+
     stratum_config = hiyapyco.load(args.config, failonmissingfiles=False) or {}
 
-    if not stratum_config.get('root'):
-        stratum_config['root'] = args.root
+    stratum_config['root'] = args.root
 
-    if not stratum_config.get('hierarchy'):
-        stratum_config['hierarchy'] = args.hierarchy
+    # Always use the user-specified hierarchy over the config file
+    stratum_config['hierarchy'] = args.hierarchy or stratum_config.get('hierarchy') or [[]]
 
-    if not stratum_config.get('out'):
-        stratum_config['out'] = args.out
+    stratum_config['out'] = args.out
 
-    if stratum_config.get('debug') is None:
-        stratum_config['debug'] = args.debug
+    stratum_config['debug'] = args.debug
 
     logger.debug(json.dumps(stratum_config))
 
