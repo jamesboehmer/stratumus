@@ -57,10 +57,10 @@ defined as:
     region: us-east-1
     group: external
 
-Now that stratumus has your hierarchy variables defined, it will look for default configurations to load first, in
-hierarchy order.  Your hierarchy variables are available for interpolation inside your yaml files as well, so you can
-use ``{{ env }}`` and ``{{ region }}`` in both your config and your defaults.  It will look for the following files,
-and ignore missing ones:
+Now that stratumus has your hierarchy variables defined, it will first look under ``data/default`` for default
+configurations to load, in hierarchy order. Stratumus will then look at the yaml files in the leaves of ``data/config``
+to override any values found in defaults.  In this example, stratumus will look for the following files in order, and
+ignore missing ones:
 
 ::
 
@@ -69,9 +69,13 @@ and ignore missing ones:
     data/default/app/api.yaml
     data/default/region/us-east-1.yaml # not found
     data/default/group/external.yaml # not found
+    data/config/dev/foo/api/us-east-1/external.yaml
 
-There is one output for each file found in the config hierarchy.  In this example, there is exactly one output for
-``dev/foo/api/us-east-1/external.yaml``.
+Your hierarchy variables are available for interpolation inside your yaml files as well, so you can use ``{{ env }}``
+and ``{{ region }}`` in both your config and your defaults.
+
+There is one output for each file found in the config hierarchy.  In this example, that output is
+``/tmp/data/dev/foo/api/us-east-1/external.yaml``.
 
 Sharing global variables
 ~~~~~~~~~~~~~~~~~~~~~~~~
