@@ -66,6 +66,17 @@ class Stratum(object):
                 ]
                 for k, v in hierarchy_values.items():
                     yaml_files_to_be_loaded.append(os.path.sep.join([self.default_dir, k, v + '.yaml']))
+
+                leaf_parent_hierarchy = list(hierarchy_values.values())[:-1]
+                leaf_parents = {k: v for k, v in enumerate(leaf_parent_hierarchy)}
+                for k, v in leaf_parents.items():
+                    try:
+                        leaf_parent = os.path.sep.join(
+                            [self.config_dir] + leaf_parent_hierarchy[0:k + 1] + [leaf_parents[k + 1] + '.yaml'])
+                        yaml_files_to_be_loaded.append(leaf_parent)
+                    except KeyError:
+                        pass
+
                 yaml_files_to_be_loaded.append(leaf)
                 logger.debug("YAML files to be loaded: {}".format(yaml_files_to_be_loaded[1:]))
                 config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=False, interpolate=True)
