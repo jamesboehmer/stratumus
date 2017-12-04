@@ -76,14 +76,14 @@ class Stratum(object):
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
-    def dump_configs(self, out_dir=None, dump_json=False):
+    def dump_configs(self, out_dir=None, with_json=False):
         if not self.config:
             logger.error("No configurations found")
             return
         if not out_dir:
             for filename, config in self.config.items():
                 logger.info("{}:\n---\n{}".format(filename, odyldo.safe_dump(config, default_flow_style=False)))
-                if dump_json:
+                if with_json:
                     logger.info("{}\n".format(json.dumps(config)))
         else:
             for filename, config in self.config.items():
@@ -95,7 +95,7 @@ class Stratum(object):
                     f.write('---\n')
                     f.write(hiyapyco.dump(config, default_flow_style=False))
                 json_output_name = YAML_SUFFIX_PATTERN.sub('.json', output_name)
-                if dump_json:
+                if with_json:
                     with open(json_output_name, 'w') as f:
                         logger.info(json_output_name)
                         json.dump(config, f)
@@ -109,7 +109,7 @@ def main():
                         help="Directory with config data (default: .)")
     parser.add_argument("-i", "--hierarchy", nargs='+', action='append', type=str, required=False)
     parser.add_argument("-o", "--out", type=str, default=None, help="Output directory", required=False)
-    parser.add_argument("-j", "--dump_json", action='store_true', help="Dumps json in addition to yaml", required=False)
+    parser.add_argument("-j", "--with-json", action='store_true', help="Dumps json in addition to yaml", required=False)
     parser.add_argument("-d", "--debug", action='store_true', help="Enable Debugging", required=False)
 
     args, unknown = parser.parse_known_args()
@@ -137,7 +137,7 @@ def main():
 
     stratum_config['out'] = args.out
 
-    stratum_config['dump_json'] = args.dump_json
+    stratum_config['with_json'] = args.with_json
 
     stratum_config['debug'] = args.debug
 
@@ -150,7 +150,7 @@ def main():
     try:
         stratum = Stratum(root_dir=stratum_config.get('root'), hierarchies=stratum_config.get('hierarchy'),
                           filters=filters)
-        stratum.dump_configs(stratum_config.get('out'), stratum_config['dump_json'])
+        stratum.dump_configs(stratum_config.get('out'), stratum_config['with_json'])
     except Exception as e:
         logger.error(e)
         sys.exit(1)
