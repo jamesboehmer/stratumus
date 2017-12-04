@@ -4,7 +4,9 @@ import errno
 import json
 import logging
 import os
+import re
 import sys
+
 from argparse import ArgumentParser
 from collections import OrderedDict
 from glob import glob
@@ -24,6 +26,8 @@ console = logging.StreamHandler()
 logger = logging.getLogger('stratumus')
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
+
+YAML_SUFFIX_PATTERN = re.compile(r'.yaml$')
 
 
 # Shamelessly copied from http://stackoverflow.com/questions/600268/mkdir-p-functionality-in-python
@@ -83,13 +87,15 @@ class Stratum(object):
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
-    def dump_configs(self, out_dir=None):
+    def dump_configs(self, out_dir=None, with_json=False):
         if not self.config:
             logger.error("No configurations found")
             return
         if not out_dir:
             for filename, config in self.config.items():
                 logger.info("{}:\n---\n{}".format(filename, odyldo.safe_dump(config, default_flow_style=False)))
+                if with_json:
+                    logger.info("{}\n".format(json.dumps(config)))
         else:
             for filename, config in self.config.items():
                 output_name = os.path.sep.join([out_dir, filename])
@@ -99,6 +105,11 @@ class Stratum(object):
                     logger.info(output_name)
                     f.write('---\n')
                     f.write(hiyapyco.dump(config, default_flow_style=False))
+                json_output_name = YAML_SUFFIX_PATTERN.sub('.json', output_name)
+                if with_json:
+                    with open(json_output_name, 'w') as f:
+                        logger.info(json_output_name)
+                        json.dump(config, f)
 
 
 def main():
@@ -108,7 +119,8 @@ def main():
     parser.add_argument("-r", "--root", type=str, default=None, required=False,
                         help="Directory with config data (default: .)")
     parser.add_argument("-i", "--hierarchy", nargs='+', action='append', type=str, required=False)
-    parser.add_argument("-o", "--out", type=str, default=None, help="Output Directory", required=False)
+    parser.add_argument("-o", "--out", type=str, default=None, help="Output directory", required=False)
+    parser.add_argument("-j", "--with-json", action='store_true', help="Dumps json in addition to yaml", required=False)
     parser.add_argument("-d", "--debug", action='store_true', help="Enable Debugging", required=False)
 
     args, unknown = parser.parse_known_args()
@@ -136,6 +148,8 @@ def main():
 
     stratum_config['out'] = args.out
 
+    stratum_config['with_json'] = args.with_json
+
     stratum_config['debug'] = args.debug
 
     filters = dict(zip([u[2:] for u in unknown[:-1:2] if u.startswith('--')], unknown[1::2]))
@@ -147,7 +161,7 @@ def main():
     try:
         stratum = Stratum(root_dir=stratum_config.get('root'), hierarchies=stratum_config.get('hierarchy'),
                           filters=filters)
-        stratum.dump_configs(stratum_config.get('out'))
+        stratum.dump_configs(stratum_config.get('out'), stratum_config['with_json'])
     except Exception as e:
         logger.error(e)
         sys.exit(1)
