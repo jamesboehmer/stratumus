@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import errno
+import itertools
 import json
 import logging
 import os
@@ -27,6 +28,7 @@ logger = logging.getLogger('stratumus')
 logger.addHandler(console)
 logger.setLevel(logging.INFO)
 
+INCLUSIVE_VALUE = '@'
 YAML_SUFFIX_PATTERN = re.compile(r'.yaml$')
 
 
@@ -39,6 +41,12 @@ def mkdir_p(path):
             pass
         else:
             raise
+
+
+# Shamelessly copied from https://stackoverflow.com/questions/8784813/lstrip-rstrip-for-lists
+def _rstrip_list(l):
+    reverse_stripped = itertools.dropwhile(lambda val: val == INCLUSIVE_VALUE, reversed(l))
+    return reversed(list(reverse_stripped))
 
 
 class Stratum(object):
@@ -57,33 +65,50 @@ class Stratum(object):
                 [self.config_dir] + [self.filters.get(h, '**') for h in hierarchy[:-1]] + [
                     self.filters.get(hierarchy[-1], '*')]) + '.yaml'
             logger.debug("Glob pattern: {}".format(glob_pattern))
-            leaves = glob(glob_pattern)
+            leaves = [path for path in glob(glob_pattern) if INCLUSIVE_VALUE not in path]
             for leaf in leaves:
                 logger.debug("Config file: {}".format(leaf))
                 _leaf = os.path.splitext(leaf)[0][len(self.config_dir):].lstrip('/')
                 path_components = _leaf.split(os.path.sep)
-                hierarchy_values = OrderedDict(zip(hierarchy, path_components))
-                logger.debug("Hierarchy: {}".format(json.dumps(hierarchy_values)))
-                yaml_hierarchy_defaults = odyldo.safe_dump(hierarchy_values, default_flow_style=False)
+                hierarchy_dict = OrderedDict(zip(hierarchy, path_components))
+                logger.debug("Hierarchy: {}".format(json.dumps(hierarchy_dict)))
+                yaml_hierarchy_defaults = odyldo.safe_dump(hierarchy_dict, default_flow_style=False)
+                # FIRST APPEND HIERARCHICAL VALUES
                 yaml_files_to_be_loaded = [
                     yaml_hierarchy_defaults
                 ]
-                for k, v in hierarchy_values.items():
-                    yaml_files_to_be_loaded.append(os.path.sep.join([self.default_dir, k, v + '.yaml']))
 
-                leaf_parent_hierarchy = list(hierarchy_values.values())[:-1]
-                leaf_parents = {k: v for k, v in enumerate(leaf_parent_hierarchy)}
-                for k, v in leaf_parents.items():
-                    try:
-                        leaf_parent = os.path.sep.join(
-                            [self.config_dir] + leaf_parent_hierarchy[0:k + 1] + [leaf_parents[k + 1] + '.yaml'])
-                        yaml_files_to_be_loaded.append(leaf_parent)
-                    except KeyError:
-                        pass
+                # NOW APPEND DEFAULT FILES
+                for k, v in hierarchy_dict.iteritems():
+                    default_fp = os.path.sep.join([self.default_dir, k, v + '.yaml'])
+                    if os.path.isfile(default_fp):
+                        yaml_files_to_be_loaded.append(default_fp)
 
-                yaml_files_to_be_loaded.append(leaf)
+                # NOW APPEND CONFIG FILES
+                hierarchy_values = hierarchy_dict.values()
+                possible_paths = itertools.product(*[[INCLUSIVE_VALUE, val] for val in hierarchy_values])
+
+                def _gen_config_paths():
+                    for possible_path_components in possible_paths:
+                        # cut config/dev/foo/api/@/@.yaml to config/dev/foo/api.yaml
+                        stripped = tuple(_rstrip_list(possible_path_components))
+                        if stripped:
+                            config_filename = stripped[-1] + '.yaml'
+                            config_filepath = os.path.sep.join(
+                                (self.config_dir,) + stripped[:-1] + (config_filename,)
+                            )
+                            if os.path.isfile(config_filepath):
+                                yield config_filepath
+
+                sorted_config_files = sorted(
+                    _gen_config_paths(),
+                    key=lambda value: (len(val.split(os.path.sep)), val)
+                )
+
+                yaml_files_to_be_loaded.extend(sorted_config_files)
+
                 logger.debug("YAML files to be loaded: {}".format(yaml_files_to_be_loaded[1:]))
-                config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=False, interpolate=True)
+                config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True)
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
