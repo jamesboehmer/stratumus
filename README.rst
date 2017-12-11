@@ -23,9 +23,23 @@ Given this directory structure:
     data
     ├── config
     │   └── dev
-    │       └── foo
-    │           └── api
-    │               └── us-east-1
+    │       ├── foo
+    │       │   ├── api.yaml
+    │       │   └── api
+    │       │       ├── us-east-1
+    │       │       │   └── external.yaml
+    │       │       └── us-west-2
+    │       │           └── external.yaml
+    │       ├── prod
+    │       │   └── api
+    │       │       └── us-east-1
+    │       │           ├── external.yaml
+    │       │           └── internal.yaml
+    │       ├── @
+    │       │   └── api.yaml
+    │       └── @
+    │           └── @
+    │               └── @
     │                   └── external.yaml
     └── default
         ├── app
@@ -45,9 +59,11 @@ You might run:
 
 ``stratumus --root data --hierarchy env namespace app region group --out /tmp/data``
 
-Stratumus will first look for yaml files under ``data/config`` which match your hierarchy pattern.  In the above
-example, it will find ``data/config/dev/foo/api/us-east-1/external.yaml``, and your hierarchy variables will be
-defined as:
+Stratumus will first look for yaml files under ``data/config`` which match your hierarchy pattern, ignoreing files with
+a ``@`` in their path. In the above example, it will find ``data/config/dev/foo/api/us-east-1/external.yaml``,
+``data/config/dev/foo/api/us-west-2/external.yaml``, and ``data/config/dev/foo/api/us-east-1/external.yaml``.
+
+Your hierarchy variables for ``data/config/dev/foo/api/us-east-1/external.yaml`` will be defined as:
 
 ::
 
@@ -69,12 +85,25 @@ ignore missing ones:
     data/default/app/api.yaml
     data/default/region/us-east-1.yaml # not found
     data/default/group/external.yaml # not found
+
+Next, startums will look through ``data/config``. Directories named ``@`` act much like a ``*`` wildcard, matching
+all values for its level of the heirarchy. In this example, ``data/config/dev/foo/api/us-east-1/external.yaml`` will
+pick up variable in the following order:
+
+::
+
+    data/config/dev/@/api.yaml
+    data/config/dev/foo/api.yaml
+    data/config/dev/@/@/@/external.yaml
     data/config/dev/foo/api/us-east-1/external.yaml
+
+Note that the order is determined first a config files place in the hierarchy, and then by whether or not a
+hierarchical value is ``@``, with ``@`` preceding named values.
 
 Your hierarchy variables are available for interpolation inside your yaml files as well, so you can use ``{{ env }}``
 and ``{{ region }}`` in both your config and your defaults.
 
-There is one output for each file found in the config hierarchy.  In this example, that output is
+There is one output for each leaf without an ``@`` its path in the config hierarchy.  In this example, that output is
 ``/tmp/data/dev/foo/api/us-east-1/external.yaml``.
 
 Sharing global variables
