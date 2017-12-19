@@ -44,9 +44,26 @@ def mkdir_p(path):
 
 
 # Shamelessly copied from https://stackoverflow.com/questions/8784813/lstrip-rstrip-for-lists
-def _rstrip_list(l):
-    reverse_stripped = itertools.dropwhile(lambda val: val == INCLUSIVE_VALUE, reversed(l))
+def _rstrip_itr(itr):
+    reverse_stripped = itertools.dropwhile(lambda val: val == INCLUSIVE_VALUE, reversed(itr))
     return reversed(list(reverse_stripped))
+
+
+def _gen_config_paths(config_dir, possible_paths):
+    '''
+    Looks through all possible_paths, rstrips each path of the INCLUSIVE_VALUE,
+    and yields it if a file exists at that path.
+    '''
+    for possible_path_components in possible_paths:
+        # cut config/dev/foo/api/@/@.yaml to config/dev/foo/api.yaml
+        stripped = tuple(_rstrip_itr(possible_path_components))
+        if stripped:
+            config_filename = stripped[-1] + '.yaml'
+            config_filepath = os.path.sep.join(
+                (config_dir,) + stripped[:-1] + (config_filename,)
+            )
+            if os.path.isfile(config_filepath):
+                yield config_filepath
 
 
 class Stratum(object):
@@ -88,20 +105,8 @@ class Stratum(object):
                 hierarchy_values = hierarchy_dict.values()
                 possible_paths = itertools.product(*[[INCLUSIVE_VALUE, val] for val in hierarchy_values])
 
-                def _gen_config_paths():
-                    for possible_path_components in possible_paths:
-                        # cut config/dev/foo/api/@/@.yaml to config/dev/foo/api.yaml
-                        stripped = tuple(_rstrip_list(possible_path_components))
-                        if stripped:
-                            config_filename = stripped[-1] + '.yaml'
-                            config_filepath = os.path.sep.join(
-                                (self.config_dir,) + stripped[:-1] + (config_filename,)
-                            )
-                            if os.path.isfile(config_filepath):
-                                yield config_filepath
-
                 sorted_config_files = sorted(
-                    _gen_config_paths(),
+                    _gen_config_paths(self.config_dir, possible_paths),
                     key=lambda value: (len(val.split(os.path.sep)), val)
                 )
 

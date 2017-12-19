@@ -97,7 +97,7 @@ pick up variable in the following order:
     data/config/dev/@/@/@/external.yaml
     data/config/dev/foo/api/us-east-1/external.yaml
 
-Note that the order is determined first a config files place in the hierarchy, and then by whether or not a
+Note that the order is determined first by where a config files place in the hierarchy, and then by whether or not a
 hierarchical value is ``@``, with ``@`` preceding named values.
 
 Your hierarchy variables are available for interpolation inside your yaml files as well, so you can use ``{{ env }}``
