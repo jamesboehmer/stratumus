@@ -79,7 +79,7 @@ class Stratum(object):
                 ]
 
                 # NOW APPEND DEFAULT FILES
-                for k, v in hierarchy_dict.iteritems():
+                for k, v in hierarchy_dict.items():
                     default_fp = os.path.sep.join([self.default_dir, k, v + '.yaml'])
                     if os.path.isfile(default_fp):
                         yaml_files_to_be_loaded.append(default_fp)
