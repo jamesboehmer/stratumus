@@ -102,7 +102,7 @@ class Stratum(object):
 
                 sorted_config_files = sorted(
                     _gen_config_paths(),
-                    key=lambda value: (len(val.split(os.path.sep)), val)
+                    key=lambda value: (len(value.split(os.path.sep)), value)
                 )
 
                 yaml_files_to_be_loaded.extend(sorted_config_files)
@@ -188,7 +188,7 @@ def main():
                           filters=filters)
         stratum.dump_configs(stratum_config.get('out'), stratum_config['with_json'])
     except Exception as e:
-        logger.error(e)
+        logger.exception(e)
         sys.exit(1)
 
 
