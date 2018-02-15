@@ -137,7 +137,7 @@ You may also make variables available for interpolation but not for inclusion in
 add a colon after the hierarchy variable (e.g. ``interpolatedNotRendered:``), indicating that this variable may be
 interpolated, but it will not be represented in the output configuration. In rare cases, you might want the variable to
 take on a different name when interpolated than when it's rendered. In this case add the value you'd like the variable
-to be rendered on after the colon (e.g. ``interpolatedAs:renderedAs``).
+to be rendered as after the colon (e.g. ``interpolatedAs:renderedAs``).
 
 Since stratumus uses jinja2 for variable interpolation, all of Jinja2's `filters <http://jinja.pocoo.org/docs/latest/templates/>`_ are available.  
 For example, you can use ``ENV: "{{ env | upper }}"``, and your final output will include ``ENV: DEV``.
