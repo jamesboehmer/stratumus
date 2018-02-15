@@ -141,7 +141,7 @@ class Stratum(object):
                     if hierarchy_alias != hierarchy_string:
                         if hierarchy_alias:
                             config[hierarchy_alias] = config[hierarchy_string]
-                            config.pop(hierarchy_string)
+                        config.pop(hierarchy_string)
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
