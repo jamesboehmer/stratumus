@@ -50,11 +50,12 @@ def _rstrip_list(l):
 
 
 class Stratum(object):
-    def __init__(self, root_dir, hierarchies, filters={}):
+    def __init__(self, root_dir, hierarchies, filters={}, attempt_merge=False):
         self.root_dir = os.path.abspath(root_dir.rstrip('/'))
         self.config_dir = os.path.sep.join([self.root_dir, 'config'])
         self.default_dir = os.path.sep.join([self.root_dir, 'default'])
         self.hierarchies = hierarchies or [[]]
+        self.attempt_merge = attempt_merge
         self.filters = filters
         self.config = {}
         self.walk_configs()
@@ -125,16 +126,21 @@ class Stratum(object):
                 yaml_files_to_be_loaded.extend(sorted_config_files)
 
                 logger.debug("YAML files to be loaded: {}".format(yaml_files_to_be_loaded[1:]))
-                try:
+                config = {}
+                if self.attempt_merge:
+                    try:
+                        config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True,
+                                   method=METHOD_MERGE)
+                    except:
+                        logger.debug('Unable to load with method merge, will attempt method simple')
+                if not config:
                     config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True,
-                                       method=METHOD_MERGE)
-                except:
-                    config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True,
-                                       method=METHOD_SIMPLE)
+                                    method=METHOD_SIMPLE)
                 for (hierarchy_string, hierarchy_alias) in hierarchy_strings_to_alias.items():
-                    if hierarchy_alias:
-                        config[hierarchy_alias] = config[hierarchy_string]
-                    config.pop(hierarchy_string)
+                    if hierarchy_alias != hierarchy_string:
+                        if hierarchy_alias:
+                            config[hierarchy_alias] = config[hierarchy_string]
+                        config.pop(hierarchy_string)
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
@@ -173,6 +179,7 @@ def main():
     parser.add_argument("-o", "--out", type=str, default=None, help="Output directory", required=False)
     parser.add_argument("-j", "--with-json", action='store_true', help="Dumps json in addition to yaml", required=False)
     parser.add_argument("-d", "--debug", action='store_true', help="Enable Debugging", required=False)
+    parser.add_argument("-m", "--merge", action='store_true', help="Attempt Method Merge", required=False)
 
     args, unknown = parser.parse_known_args()
 
@@ -201,6 +208,8 @@ def main():
 
     stratum_config['with_json'] = args.with_json
 
+    stratum_config['attempt_merge'] = args.merge
+
     stratum_config['debug'] = args.debug
 
     filters = dict(zip([u[2:] for u in unknown[:-1:2] if u.startswith('--')], unknown[1::2]))
@@ -211,7 +220,7 @@ def main():
 
     try:
         stratum = Stratum(root_dir=stratum_config.get('root'), hierarchies=stratum_config.get('hierarchy'),
-                          filters=filters)
+                          filters=filters, attempt_merge=args.merge)
         stratum.dump_configs(stratum_config.get('out'), stratum_config['with_json'])
     except Exception as e:
         logger.exception(e)
