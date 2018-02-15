@@ -13,9 +13,9 @@ from collections import OrderedDict
 from glob import glob
 
 import hiyapyco
-from hiyapyco import odyldo
-from jinja2 import Environment, DebugUndefined, StrictUndefined
+from hiyapyco import odyldo, METHOD_MERGE, METHOD_SIMPLE
 
+from jinja2 import Environment, DebugUndefined, StrictUndefined
 hiyapyco.jinja2env = Environment(undefined=StrictUndefined)
 
 hiconsole = logging.StreamHandler()
@@ -61,16 +61,33 @@ class Stratum(object):
 
     def walk_configs(self):
         for hierarchy in self.hierarchies:
-            glob_pattern = os.path.sep.join(
-                [self.config_dir] + [self.filters.get(h, '**') for h in hierarchy[:-1]] + [
-                    self.filters.get(hierarchy[-1], '*')]) + '.yaml'
+            glob_pattern_to_join = [self.config_dir]
+            hierarchy_strings_to_alias = {}
+            for i, h in enumerate(hierarchy):
+                if isinstance(h, str):
+                    hierarchy_string = h
+                    alias = h
+                elif isinstance(h, OrderedDict) and len(h) == 1:
+                    hierarchy_string = list(h.keys())[0]
+                    alias = h[hierarchy_string]
+                else:
+                    raise Exception('Hierarchy elements must be either strings or OrderedDicts of length 1. Received {}'.
+                                    format(h))
+                hierarchy_strings_to_alias[hierarchy_string] = alias
+                default_filter = '**'
+                extension = ''
+                if i == len(hierarchy_string) - 1:
+                    default_filter = '*'
+                    extension = '.yaml'
+                glob_pattern_to_join.append(self.filters.get(hierarchy_string, default_filter) + extension)
+            glob_pattern = os.path.sep.join(glob_pattern_to_join)
             logger.debug("Glob pattern: {}".format(glob_pattern))
             leaves = [path for path in glob(glob_pattern) if INCLUSIVE_VALUE not in path]
             for leaf in leaves:
                 logger.debug("Config file: {}".format(leaf))
                 _leaf = os.path.splitext(leaf)[0][len(self.config_dir):].lstrip('/')
                 path_components = _leaf.split(os.path.sep)
-                hierarchy_dict = OrderedDict(zip(hierarchy, path_components))
+                hierarchy_dict = OrderedDict(zip(list(hierarchy_strings_to_alias.keys()), path_components))
                 logger.debug("Hierarchy: {}".format(json.dumps(hierarchy_dict)))
                 yaml_hierarchy_defaults = odyldo.safe_dump(hierarchy_dict, default_flow_style=False)
                 # FIRST APPEND HIERARCHICAL VALUES
@@ -108,7 +125,16 @@ class Stratum(object):
                 yaml_files_to_be_loaded.extend(sorted_config_files)
 
                 logger.debug("YAML files to be loaded: {}".format(yaml_files_to_be_loaded[1:]))
-                config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True)
+                try:
+                    config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True,
+                                       method=METHOD_MERGE)
+                except:
+                    config = hiyapyco.load(yaml_files_to_be_loaded, failonmissingfiles=True, interpolate=True,
+                                       method=METHOD_SIMPLE)
+                for (hierarchy_string, hierarchy_alias) in hierarchy_strings_to_alias.items():
+                    if hierarchy_alias:
+                        config[hierarchy_alias] = config[hierarchy_string]
+                    config.pop(hierarchy_string)
                 output_name = leaf[len(self.config_dir):].lstrip('/')
                 self.config[output_name] = config
 
