@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(name='stratumus',
-      version='0.0.14',
+      version='0.0.16',
       description='Layered Yaml Python Configuration',
       author='James Boehmer',
       author_email='james.boehmer@gmail.com',
