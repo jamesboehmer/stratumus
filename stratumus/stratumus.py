@@ -63,7 +63,7 @@ class Stratum(object):
     def walk_configs(self):
         for hierarchy in self.hierarchies:
             glob_pattern_to_join = [self.config_dir]
-            hierarchy_strings_to_alias = {}
+            hierarchy_strings_to_alias = OrderedDict()
             for i, h in enumerate(hierarchy):
                 if isinstance(h, str):
                     hierarchy_string = h
