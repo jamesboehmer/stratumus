@@ -23,24 +23,24 @@ Given this directory structure:
     data
     ├── config
     │   └── dev
-    │       ├── foo
-    │       │   ├── api.yaml
-    │       │   └── api
-    │       │       ├── us-east-1
-    │       │       │   └── external.yaml
-    │       │       └── us-west-2
-    │       │           └── external.yaml
-    │       ├── prod
-    │       │   └── api
-    │       │       └── us-east-1
-    │       │           ├── external.yaml
-    │       │           └── internal.yaml
-    │       ├── @
-    │       │   └── api.yaml
-    │       └── @
-    │           └── @
-    │               └── @
-    │                   └── external.yaml
+    │   |   ├── foo
+    │   |       ├── api.yaml
+    │   |       └── api
+    │   |           ├── us-east-1
+    │   |           │   └── external.yaml
+    │   |           └── us-west-2
+    │   |               └── external.yaml
+    │   └── prod
+    │   |   └── api
+    │   |       └── us-east-1
+    │   |           ├── external.yaml
+    │   |           └── internal.yaml
+    │   ├── @
+    │   │   └── api.yaml
+    │   └── @
+    │       └── @
+    │           └── @
+    │               └── external.yaml
     └── default
         ├── app
         │   ├── api.yaml
